@@ -32,8 +32,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data
 
-train_data_folder = "/home/vignesh/workspace/lyft_3d/data/proper/artifacts/bev_train_data/"
-validation_data_folder = "/home/vignesh/workspace/lyft_3d/data/proper/artifacts/bev_validation_data/"
+ARTIFACTS_FOLDER = "/home/vignesh/workspace/lyft_3d/data/proper/artifacts/"
+train_data_folder = f"{ARTIFACTS_FOLDER}bev_train_data/"
+validation_data_folder = f"{ARTIFACTS_FOLDER}bev_validation_data/"
 
 classes = ["car", "motorcycle", "bus", "bicycle", "truck", "pedestrian", "other_vehicle", "animal", "emergency_vehicle"]
 
@@ -276,10 +277,11 @@ def visualize_predictions(input_image, prediction, target, n_images=2, apply_sof
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 class_weights = torch.from_numpy(np.array([0.2] + [1.0] * len(classes), dtype=np.float32))
 class_weights = class_weights.to(device)
+print(f"Device type = {device}")
 
 # %%
 
-batch_size = 8
+batch_size = 2
 epochs = 15  # Note: We may be able to train for longer and expect better results, the reason this number is low is to keep the runtime short.
 
 model = get_unet_model(num_output_classes=len(classes) + 1)
@@ -294,7 +296,7 @@ for epoch in range(1, epochs + 1):
     print("Epoch", epoch)
 
     epoch_losses = []
-    progress_bar = tqdm_notebook(dataloader)
+    progress_bar = tqdm(dataloader)
 
     for ii, (X, target, sample_ids) in enumerate(progress_bar):
         X = X.to(device)  # [N, 3, H, W]
@@ -307,7 +309,7 @@ for epoch in range(1, epochs + 1):
         optim.step()
 
         epoch_losses.append(loss.detach().cpu().numpy())
-
+        # print(f" Training Step: Epoch = {epoch}, Step = {ii} ")
         if ii == 0:
             visualize_predictions(X, prediction, target)
 
